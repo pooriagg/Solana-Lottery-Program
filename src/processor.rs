@@ -176,28 +176,17 @@ impl Processor {
             .unwrap()
             .len();
 
-        let rent = (Rent::get()?).minimum_balance(data_size);
-        
-        invoke_signed(
-            &create_account(
-                fund_account_info.key,
-                config_global_account_info.key,
-                rent,
-                data_size
-                    .try_into()
-                    .unwrap(),
-                program_id
-            ),
-            &[
-                fund_account_info.clone(),
-                config_global_account_info.clone()
-            ],
-            &[
-                &[
-                    CONFIG_ACCOUNT_SEED.as_bytes(),
-                    &[ config_pda_canonical_bump ]
-                ]
-            ]
+        // create the config-account
+        let seeds: &[&[u8]] = &[
+            CONFIG_ACCOUNT_SEED.as_bytes(),
+            &[ config_pda_canonical_bump ]
+        ];
+        create_pda_account(
+            config_global_account_info,
+            fund_account_info,
+            data_size,
+            program_id,
+            seeds
         )?;
         sol_log("Config account created.");
 
@@ -365,30 +354,19 @@ impl Processor {
 
         let total_data_size = data_size + total_space_needed_for_winners;
 
-        let rent = (Rent::get()?).minimum_balance(total_data_size);
-
-        invoke_signed(
-            &create_account(
-                funding_account_info.key,
-                lottery_account_info.key,
-                rent,
-                total_data_size
-                    .try_into()
-                    .unwrap(),
-                program_id
-            ),
-            &[
-                funding_account_info.clone(),
-                lottery_account_info.clone()
-            ],
-            &[
-                &[
-                    LOTTERY_ACCOUNT_SEED.as_bytes(),
-                    &lottery_account_authority_account_info.key.to_bytes(),
-                    get_lottery_literal_seed(&lottery_description).as_slice(),
-                    &[ lottery_pda_canonical_bump ]
-                ]
-            ]
+        // create the lottery-account
+        let seeds: &[&[u8]] = &[
+            LOTTERY_ACCOUNT_SEED.as_bytes(),
+            &lottery_account_authority_account_info.key.to_bytes(),
+            &get_lottery_literal_seed(&lottery_description),
+            &[ lottery_pda_canonical_bump ]
+        ];
+        create_pda_account(
+            lottery_account_info,
+            funding_account_info,
+            total_data_size,
+            program_id,
+            seeds
         )?;
         sol_log("Lottery account created.");
 
@@ -582,30 +560,20 @@ impl Processor {
             ProgramError::InvalidSeeds
         )?;
 
-        let rent = (Rent::get()?).minimum_balance(User::LEN);
-        
-        invoke_signed(
-            &create_account(
-                funding_account_info.key,
-                user_account_info.key,
-                rent,
-                User::LEN
-                    .try_into()
-                    .unwrap(),
-                program_id
-            ),
-            &[
-                funding_account_info.clone(),
-                user_account_info.clone()
-            ],
-            &[
-                &[
-                    USER_ACCOUNT_SEED.as_bytes(),
-                    &user_account_authority_account_info.key.to_bytes(),
-                    lottery_account_info.key.as_ref(),
-                    &[ user_account_pda_canonical_bump ]
-                ]
-            ]
+        // create the user-account
+        let space = User::LEN;
+        let seeds: &[&[u8]] = &[
+            USER_ACCOUNT_SEED.as_bytes(),
+            &user_account_authority_account_info.key.to_bytes(),
+            &lottery_account_info.key.to_bytes(),
+            &[ user_account_pda_canonical_bump ]
+        ];
+        create_pda_account(
+            user_account_info,
+            funding_account_info,
+            space,
+            program_id,
+            seeds
         )?;
         sol_log("User account created.");
 
@@ -2888,6 +2856,54 @@ impl Processor {
             }
         }
     }
+}
+
+fn create_pda_account<'a, 'b>(
+    new_pda_account_info: &AccountInfo<'a>,
+    fee_payer_account_info: &AccountInfo<'b>,
+    space: usize,
+    program_id: &Pubkey,
+    seeds: &[&[u8]]
+) -> ProgramResult where 'b:'a, 'a:'b {
+    let rent = Rent::get()?.minimum_balance(space);
+    let new_pda_account_balance = new_pda_account_info.lamports();
+    if new_pda_account_balance < rent {
+        let lamports_needed = rent
+            .checked_sub(new_pda_account_balance)
+            .unwrap();
+        
+        invoke(
+            &transfer_lamports(
+                fee_payer_account_info.key,
+                new_pda_account_info.key,
+                lamports_needed
+            ),
+            &[
+                fee_payer_account_info.clone(),
+                new_pda_account_info.clone()
+            ]
+        )?;
+    };
+
+    invoke_signed(
+        &allocate_memory(
+            new_pda_account_info.key,
+            space as u64
+        ),
+        &[ new_pda_account_info.clone() ],
+        &[ seeds ]
+    )?;
+
+    invoke_signed(
+        &assign_new_owner(
+            new_pda_account_info.key,
+            program_id
+        ),
+        &[ new_pda_account_info.clone() ],
+        &[ seeds ]
+    )?;
+
+    Ok(())
 }
 
 pub fn get_config_account_authority(config_global_account_info: &AccountInfo) -> Pubkey {
