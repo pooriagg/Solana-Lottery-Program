@@ -52,8 +52,9 @@ use {
         pubkey::Pubkey,
         pubkey,
         system_instruction::{
-            create_account,
-            transfer as transfer_lamports
+            transfer as transfer_lamports,
+            allocate as allocate_memory,
+            assign as assign_new_owner
         },
         sysvar::{
             Sysvar,
