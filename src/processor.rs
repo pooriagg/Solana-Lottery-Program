@@ -360,7 +360,7 @@ impl Processor {
             .unwrap()
             .len();
 
-        let space_needed_per_winner = std::mem::size_of::<Pubkey>() + std::mem::size_of::<bool>();
+        let space_needed_per_winner = size_of::<Pubkey>() + size_of::<bool>();
         let total_space_needed_for_winners = winners_count as usize * space_needed_per_winner;
 
         let total_data_size = data_size + total_space_needed_for_winners;
