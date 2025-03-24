@@ -3072,9 +3072,8 @@ pub fn check_accounts_key_to_be_identical(
 
 // This check is only for making the code clean, system-program itself will check that the account does not exist before creating it.
 pub fn check_account_is_raw(account_info: &AccountInfo) -> ProgramResult {
-    if account_info.owner != &SYSTEM_PROGRAM_ID ||
-       account_info.data_len() != 0 ||
-       account_info.lamports() != 0
+    if account_info.owner != &SYSTEM_PROGRAM_ID &&
+       account_info.data_len() != 0
     {
         return Err(
             LotteryError::AccountMustBeRaw.into()
