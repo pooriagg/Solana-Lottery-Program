@@ -118,7 +118,13 @@ pub enum LotteryError {
     #[error("account must be a raw-account.")]
     AccountMustBeRaw,
     #[error("current_lottery_ticket_price != user_expected_ticket_price")]
-    ExpectedTicketPriceViolated
+    ExpectedTicketPriceViolated,
+    #[error("this instruction must be the transaction-level instruction.")]
+    MustBeTransactionLevelIx,
+    #[error("this instruction must be the last instruction in the transaction")]
+    MustBeTheLastIx,
+    #[error("invalid sysvar-instruction")]
+    InvalidSysvarInstructionAccount
 }
 
 impl From<LotteryError> for ProgramError {
