@@ -485,7 +485,8 @@ pub fn instruction_end_lottery_and_pick_winners(
         AccountMeta::new_readonly(config_account, false),
         AccountMeta::new_readonly(sol_price_feed_account, false),
         AccountMeta::new_readonly(btc_price_feed_account, false),
-        AccountMeta::new_readonly(eth_price_feed_account, false)
+        AccountMeta::new_readonly(eth_price_feed_account, false),
+        AccountMeta::new_readonly(solana_program::sysvar::instructions::ID, false)
     ];
 
     let instruction_data = Instructions::EndLotteryAndPickWinners;
