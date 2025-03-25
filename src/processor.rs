@@ -2669,7 +2669,7 @@ impl Processor {
             EndLotteryAndPickWinners => {
                 sol_log("Instruction: EndLotteryAndPickWinners");
 
-                check_accounts_amount(accounts_info.len(), 5)?;
+                check_accounts_amount(accounts_info.len(), 6)?;
 
                 Self::process_end_lottery_and_pick_winners(
                     program_id,
