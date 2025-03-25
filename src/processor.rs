@@ -60,6 +60,11 @@ use {
             Sysvar,
             clock::Clock,
             rent::Rent,
+            instructions::get_instruction_relative
+        },
+        instruction::{
+            get_stack_height,
+            TRANSACTION_LEVEL_STACK_HEIGHT
         },
         system_program::{
             check_id,
@@ -905,6 +910,7 @@ impl Processor {
         let sol_price_feed_account_info = next_account_info(accounts_info)?;
         let btc_price_feed_account_info = next_account_info(accounts_info)?;
         let eth_price_feed_account_info = next_account_info(accounts_info)?;
+        let sysvar_instruction_account_info = next_account_info(accounts_info)?;
 
         let current_time = (Clock::get()?).unix_timestamp;
 
@@ -943,6 +949,30 @@ impl Processor {
         if lottery_account.get_lottery_state(current_time) != LotteryState::Successful {
             return Err(
                 LotteryError::LotteryWasNotSuccessfull.into()
+            );
+        };
+
+        // check that this instruction is a transaction-level instruction
+        if get_stack_height() != TRANSACTION_LEVEL_STACK_HEIGHT {
+            return Err(
+                LotteryError::MustBeTransactionLevelIx.into()
+            );
+        };
+
+        // validate sysvar instruction account
+        if sysvar_instruction_account_info.key != &solana_program::sysvar::instructions::ID {
+            return Err(
+                LotteryError::InvalidSysvarInstructionAccount.into()
+            );
+        };
+
+        // check that this instruction is the last instruction in the transaction
+        if let Ok(_) = get_instruction_relative(
+            1,
+            sysvar_instruction_account_info
+        ) {
+            return Err(
+                LotteryError::MustBeTheLastIx.into()
             );
         };
 
