@@ -967,8 +967,9 @@ impl Processor {
         };
 
         // check that this instruction is the last instruction in the transaction
+        const NEXT_INSTRUCTION_RELATIVE_INDEX: i64 = 1;
         if let Ok(_) = get_instruction_relative(
-            1,
+            NEXT_INSTRUCTION_RELATIVE_INDEX,
             sysvar_instruction_account_info
         ) {
             return Err(
