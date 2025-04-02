@@ -12,7 +12,7 @@ use {
 #[derive(Debug, Error, PartialEq, Clone, Copy, FromPrimitive)]
 pub enum LotteryError {
     #[error("invalid config authority.")]
-    InvalidConfigAuthority = 50,
+    InvalidConfigAuthority = 70,
     #[error("invalid config account.")]
     InvalidConfigAccount,
     #[error("Maximum time has been exceed")]
