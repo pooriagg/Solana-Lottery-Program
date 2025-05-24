@@ -2890,13 +2890,13 @@ impl Processor {
     }
 }
 
-fn create_pda_account<'a, 'b>(
-    new_pda_account_info: &AccountInfo<'a>,
-    fee_payer_account_info: &AccountInfo<'b>,
+fn create_pda_account<'a, 'info>(
+    new_pda_account_info: &'a AccountInfo<'info>,
+    fee_payer_account_info: &'a AccountInfo<'info>,
     space: usize,
     program_id: &Pubkey,
     seeds: &[&[u8]]
-) -> ProgramResult where 'b:'a, 'a:'b {
+) -> ProgramResult {
     let rent = Rent::get()?.minimum_balance(space);
     let new_pda_account_balance = new_pda_account_info.lamports();
     if new_pda_account_balance < rent {
